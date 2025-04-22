@@ -1,0 +1,25 @@
+{
+  "name": "i18n-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@solid-primitives/i18n": "^2.2.0",
+    "async-mutex": "^0.5.0",
+    "hono": "^4.7.7",
+    "toml": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "server": {
+    "name": "Server",
+    "description": "Server Name",
+    "host": "Host",
+    "port": "Port",
+    "user": {
+      "name": "Username",
+      "password": "Password"
+    }
+  },
+  "config": {
+    "title": "Configuration",
+    "description": "Configuration Description",
+    "save": "Save",
+    "reset": "Reset",
+    "apply": "Apply"
+  }
+}

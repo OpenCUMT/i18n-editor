@@ -1,0 +1,13 @@
+[server]
+host = "127.0.0.1"
+port = 5030
+
+[server.runtime]
+api_base = "/api"
+
+[i18n]
+glob = "i18n/*.json"
+default = "zh-cn"
+
+[frontend]
+path = "web/dist"
