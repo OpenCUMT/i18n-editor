@@ -6,3 +6,7 @@ dist/
 
 data/
 /config.toml
+
+*.tar
+*.tar.gz
+*.zip
