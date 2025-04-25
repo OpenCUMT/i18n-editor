@@ -17,3 +17,7 @@ data/
 /config.toml
 
 README.md
+
+*.tar
+*.tar.gz
+*.zip
