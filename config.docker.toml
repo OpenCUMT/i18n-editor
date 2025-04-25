@@ -12,5 +12,5 @@ jwt_secret = "your_jwt_secret"
 [[i18n]]
 id = "main"
 name = "网页翻译"
-glob = "data/*.json"
+glob = "/data/*.json"
 default = "zh-cn"

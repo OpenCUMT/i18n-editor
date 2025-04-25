@@ -40,7 +40,7 @@ export function getI18nProjects(): I18nProjects {
     projects[trans_proj.id] = {
       id: trans_proj.id,
       name: trans_proj.name,
-      files,
+      files: files.sort((a, b) => a.locale.localeCompare(b.locale)),
       default: trans_proj.default,
     };
   }

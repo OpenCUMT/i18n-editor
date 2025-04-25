@@ -2,8 +2,10 @@ import api, { type Translations } from "@/api";
 import NavSidebarLayout, { loginLink } from "@/pages/_blocks/nav";
 import Title from "@/pages/_blocks/title";
 import { projStore, setProjStore } from "@/storage";
+import { AppointTimeCall, CallInterval, CallLock } from "@/utils/call";
 import { useParams } from "@solidjs/router";
 import { useSearchParams } from "@solidjs/router";
+import SearchOutlinedIcon from "@suid/icons-material/SearchOutlined";
 import SubtitlesOutlinedIcon from "@suid/icons-material/SubtitlesOutlined";
 import TranslateOutlinedIcon from "@suid/icons-material/TranslateOutlined";
 import {
@@ -13,9 +15,13 @@ import {
   CardContent,
   CircularProgress,
   FormControl,
+  FormHelperText,
   IconButton,
   Input,
+  InputAdornment,
   InputLabel,
+  OutlinedInput,
+  Pagination,
   Slide,
   Typography,
 } from "@suid/material";
@@ -126,11 +132,36 @@ function getTranslations(...args: Parameters<typeof api.getTranslations>) {
   });
 }
 
+function compareTranslation(a: string, b: string) {
+  const aArray = a.split(".");
+  const bArray = b.split(".");
+  let ac = aArray.shift();
+  let bc = bArray.shift();
+  if (typeof ac === "undefined") return -1;
+  if (typeof bc === "undefined") return 1;
+  let cmp = ac.localeCompare(bc);
+  while (ac === bc) {
+    ac = aArray.shift();
+    bc = bArray.shift();
+    if (typeof ac === "undefined") return -1;
+    if (typeof bc === "undefined") return 1;
+    cmp = ac.localeCompare(bc);
+  }
+  return cmp;
+}
+
+const PAGE_SIZE = 50;
+
 export default function () {
   alerted = false;
   const params = useParams();
   const proj_id = params.proj_id;
-  const [searchParams, setSearchParams] = useSearchParams<{ compare?: string; work?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams<{
+    compare?: string;
+    work?: string;
+    page?: string;
+    search?: string;
+  }>();
 
   const [translations, setTranslations] = createStore<Record<string, Translations>>({});
   const compareLocale = createMemo(() => searchParams.compare);
@@ -139,8 +170,37 @@ export default function () {
   const [showWorkspaceTopbar, setShowWorkspaceTopbar] = createSignal(true);
   const workspaceBox = createElementRef();
   const [workspaceBoxHeight, setWorkspaceBoxHeight] = createSignal(0);
+  const searchInput = createElementRef<HTMLInputElement | HTMLTextAreaElement>();
 
-  const translateKeys = createMemo(() => Object.keys(translations[workLocale()! ?? ""] ?? {}));
+  const translateKeys = createMemo(() =>
+    Object.keys(translations[workLocale()! ?? ""] ?? {}).sort((a, b) => compareTranslation(a, b))
+  );
+  const filterString = createMemo(() => searchParams.search?.trim()?.toLowerCase() ?? "");
+  const filteredKeys = createMemo(() => {
+    const keys = translateKeys();
+    if (!filterString()) return keys;
+    return keys.filter((key) => key.toLowerCase().includes(filterString()!));
+  });
+  const totalPages = createMemo(() => Math.ceil(filteredKeys().length / PAGE_SIZE));
+  const curPage = createMemo(() => {
+    const page = Number.parseInt(searchParams.page ?? "1");
+    return Number.isNaN(page) ? page : page > totalPages() ? totalPages() : page < 1 ? 1 : page;
+  });
+
+  const compareTransSchedule = new CallInterval(() => {
+    getTranslations(proj_id, compareLocale()!).then((resp) => {
+      setTranslations({
+        [compareLocale()!]: resp,
+      });
+    });
+  }, 60 * 1000);
+  const workTransSchedule = new CallInterval(() => {
+    getTranslations(proj_id, workLocale()!).then((resp) => {
+      setTranslations({
+        [workLocale()!]: resp,
+      });
+    });
+  }, 30 * 1000);
 
   async function onLocaleChange(compare: string, work: string) {
     setSearchParams({ compare, work }, { replace: true });
@@ -152,6 +212,11 @@ export default function () {
       [compare]: compareTranslation,
       [work]: workTranslation,
     });
+    compareTransSchedule.restart();
+    workTransSchedule.restart();
+    if (searchParams.page && searchParams.page !== String(curPage())) {
+      setSearchParams({ page: String(curPage()) }, { replace: true });
+    }
   }
 
   async function onSave(locale: string, key: string, value: string) {
@@ -161,6 +226,15 @@ export default function () {
         [locale]: resp.data,
       });
     }
+  }
+
+  const SearchLock = new CallLock(() => {
+    onSearch(searchInput.ref?.value || "");
+  });
+  const AppointCall = new AppointTimeCall(500);
+  function onSearch(searchText?: string | null) {
+    AppointCall.cancel();
+    setSearchParams({ search: searchText?.trim().toLowerCase() || null }, { replace: true });
   }
 
   onMount(async () => {
@@ -230,7 +304,50 @@ export default function () {
           </Slide>
         </Box>
       </Show>
-      <div class="block py-4 px-4 md:py-8 md:px-8 lg:px-16 xl:px-32">
+
+      <div class="block py-8 px-4 md:px-8 lg:px-16 xl:px-32 *:not-first:not-last:my-8">
+        <div class="block w-full max-w-[1320px] m-auto">
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>搜索</InputLabel>
+            <OutlinedInput
+              fullWidth
+              label="搜索"
+              placeholder="请输入翻译键"
+              defaultValue={filterString()}
+              inputRef={searchInput}
+              endAdornment={
+                <InputAdornment position="end" class="mr-2">
+                  <IconButton edge="end" onClick={(_) => onSearch(searchInput.ref?.value || "")}>
+                    <SearchOutlinedIcon />
+                  </IconButton>
+                </InputAdornment>
+              }
+              onChange={(e) => {
+                const v = e.currentTarget.value;
+                if (v.trim()) AppointCall.setNext(() => onSearch(v));
+                else onSearch("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  SearchLock.tryCall(true);
+                }
+              }}
+              onKeyUp={(e) => {
+                if (e.key === "Enter") {
+                  SearchLock.unlock();
+                }
+              }}
+            />
+            <FormHelperText>
+              <Show
+                when={filterString()}
+                fallback={<span class="text-transparent pointer-events-none select-none">已显示全部</span>}
+              >
+                <span>共找到 {filteredKeys().length} 条搜索结果</span>
+              </Show>
+            </FormHelperText>
+          </FormControl>
+        </div>
         <Show
           when={projStore.current}
           fallback={
@@ -240,20 +357,35 @@ export default function () {
           }
         >
           <div class="block w-full max-w-[1320px] m-auto">
-            {translateKeys().map((key) => {
-              return (
-                <>
-                  <TransDisplay
-                    key={key}
-                    compareLocale={compareLocale()!}
-                    compareText={translations[compareLocale()!][key] ?? ""}
-                    workLocale={workLocale()!}
-                    workText={translations[workLocale()!][key] ?? ""}
-                    onSave={onSave}
-                  />
-                </>
-              );
-            })}
+            {filteredKeys()
+              .slice((curPage() - 1) * PAGE_SIZE, curPage() * PAGE_SIZE)
+              .map((key) => {
+                return (
+                  <>
+                    <TransDisplay
+                      key={key}
+                      compareLocale={compareLocale()!}
+                      compareText={translations[compareLocale()!][key] ?? ""}
+                      workLocale={workLocale()!}
+                      workText={translations[workLocale()!][key] ?? ""}
+                      onSave={onSave}
+                    />
+                  </>
+                );
+              })}
+          </div>
+          <div class="block w-full">
+            <div class="w-max max-w-full m-auto">
+              <Pagination
+                count={totalPages()}
+                page={curPage()}
+                showFirstButton
+                showLastButton
+                onChange={(_, page) => {
+                  setSearchParams({ page: String(page) }, { replace: true });
+                }}
+              />
+            </div>
           </div>
         </Show>
       </div>
