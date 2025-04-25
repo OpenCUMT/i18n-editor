@@ -1,11 +1,35 @@
+import config from "@/config";
 import { createMiddleware } from "hono/factory";
+import { Jwt } from "hono/utils/jwt";
+import type { SignatureAlgorithm } from "hono/utils/jwt/jwa";
+
+interface UserData {
+  id: string;
+  account: string;
+  nickname: string;
+  permissions: number[];
+  exp: number;
+}
+
+export function extractToken(auth: string | null | undefined) {
+  if (!auth) return null;
+  const match = /^Bearer (.+)$/.exec(auth);
+  if (!match) return null;
+  return match[1];
+}
+
+export async function verifyToken(token: string | null | undefined, secret: string, alg?: SignatureAlgorithm) {
+  if (!token) return null;
+  const data = (await Jwt.verify(token, secret, alg).catch((_) => null)) as UserData | null;
+  if (data === null || data.exp < Date.now() / 1000) return null;
+  return data;
+}
 
 export const auth = createMiddleware(async (c, next) => {
-    const auth = c.req.header("Token")
-    if (auth === undefined) { // TODO
-        return await next();
-    }
-    const u = new URL(c.req.url, "http://localhost");
-    const path = u.pathname + u.search;
-    return c.redirect(`/account/login?redirect=${encodeURIComponent(path)}`, 302);
-})
+  const token = extractToken(c.req.header("Authorization"));
+  const data = await verifyToken(token, config.secure.jwt_secret, config.secure.jwt_algorithm);
+  if (data) {
+    return await next();
+  }
+  return c.json({ code: 401, message: "Unauthorized" }, 401);
+});

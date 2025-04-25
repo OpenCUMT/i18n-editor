@@ -5,7 +5,13 @@ port = 5030
 [server.runtime]
 api_base = "/api"
 
-[i18n]
+[secure]
+jwt_algorithm = "HS256"
+jwt_secret = "your_jwt_secret"
+
+[[i18n]]
+id = "main"
+name = "网页翻译"
 glob = "i18n/*.json"
 default = "zh-cn"
 
