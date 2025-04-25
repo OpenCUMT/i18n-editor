@@ -117,9 +117,17 @@ async function logout() {
     headers: {
       authorization: `Bearer ${JSON.parse(window.localStorage.getItem("account") || "{}")?.token}`,
     },
-  }).catch((e) => {
-    console.warn("登出失败", e);
-  });
+  })
+    .then((res) => {
+      window.localStorage.removeItem("account");
+      if (!res.ok) {
+        throw new Error(`Logout failed with status ${res.status} ${res.statusText}`);
+      }
+      window.location.replace(`${import.meta.env.VITE_BUILD_BASE || ""}/`);
+    })
+    .catch((e) => {
+      console.warn("登出失败", e);
+    });
   setAccountStore({
     user: null,
   });
@@ -128,7 +136,7 @@ async function logout() {
 export function loginLink() {
   const u = new URL(window.location.href);
   const path = u.pathname + u.search;
-  return `account/login?redirect=${encodeURIComponent(path)}`;
+  return `/account/login?redirect=${encodeURIComponent(path)}`;
 }
 
 export default function NavSidebarLayout(props: {
