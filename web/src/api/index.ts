@@ -1,4 +1,5 @@
 import config from "@/config";
+import { getToken } from "@/storage";
 import Ky from "ky";
 
 const API_BASE = config.api_base || "/api";
@@ -8,7 +9,7 @@ const ky = Ky.create({
   hooks: {
     beforeRequest: [
       (request) => {
-        const token: string | undefined = JSON.parse(window.localStorage.getItem("account") || "{}")?.token;
+        const token = getToken();
         if (token) {
           request.headers.set("Authorization", `Bearer ${token}`);
         }

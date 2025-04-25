@@ -1,7 +1,7 @@
 import type { ProjectInfo, ProjectListItem } from "@/api";
 import api, { type UserData } from "@/api";
 import config from "@/config";
-import { projStore, setProjStore } from "@/storage";
+import { projStore, setAccountStore, setProjStore } from "@/storage";
 import HomeIcon from "@suid/icons-material/Home";
 import MenuIcon from "@suid/icons-material/Menu";
 import {
@@ -44,7 +44,7 @@ export function ProjectList(props: { projects: ProjectListItem[]; target?: Compo
     items: props.projects.map((proj) => {
       return {
         text: proj.name,
-        href: `/p/${proj.id}`,
+        href: `${import.meta.env.VITE_BUILD_BASE || ""}/p/${proj.id}`,
         target: props.target,
       };
     }),
@@ -96,7 +96,7 @@ export function Sidebar() {
         items={[
           {
             text: "首页",
-            href: "/",
+            href: `${import.meta.env.VITE_BUILD_BASE}/`,
             icon: <HomeIcon />,
           },
         ]}
@@ -112,7 +112,7 @@ export function Sidebar() {
 }
 
 async function logout() {
-  return await fetch("/api/account/logout", {
+  await fetch("/api/account/logout", {
     method: "POST",
     headers: {
       authorization: `Bearer ${JSON.parse(window.localStorage.getItem("account") || "{}")?.token}`,
@@ -120,9 +120,12 @@ async function logout() {
   }).catch((e) => {
     console.warn("登出失败", e);
   });
+  setAccountStore({
+    user: null,
+  });
 }
 
-function loginLink() {
+export function loginLink() {
   const u = new URL(window.location.href);
   const path = u.pathname + u.search;
   return `${config.api_base.replace(/\/$/, "")}/account/login?redirect=${encodeURIComponent(path)}`;
@@ -144,6 +147,9 @@ export default function NavSidebarLayout(props: {
     .getUserInfo()
     .then((user) => {
       setUserData(user);
+      setAccountStore({
+        user,
+      });
     })
     .catch((e) => {
       console.warn("获取用户信息失败", e);

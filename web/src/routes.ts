@@ -23,7 +23,7 @@ export function constructRoutes(globs: Record<string, () => Promise<any>>) {
     children?: RouteNode[];
   };
   const root: RouteNode = {
-    path: "/",
+    path: `${(import.meta.env.VITE_BUILD_BASE || "")}/`,
   };
 
   for (const node of nodes) {

@@ -1,5 +1,5 @@
 import api, { type Translations } from "@/api";
-import NavSidebarLayout from "@/pages/_blocks/nav";
+import NavSidebarLayout, { loginLink } from "@/pages/_blocks/nav";
 import Title from "@/pages/_blocks/title";
 import { projStore, setProjStore } from "@/storage";
 import { useParams } from "@solidjs/router";
@@ -113,7 +113,21 @@ function TransDisplay(props: {
   );
 }
 
+let alerted = false;
+function getTranslations(...args: Parameters<typeof api.getTranslations>) {
+  return api.getTranslations(...args).catch((e) => {
+    if (e.response && e.response.status === 401 && !alerted) {
+      alerted = true;
+      const opt = window.confirm("未登录，请先登录");
+      if (opt) window.location.href = loginLink();
+      else window.location.replace(`${import.meta.env.VITE_BUILD_BASE || ""}/`);
+    }
+    throw e;
+  });
+}
+
 export default function () {
+  alerted = false;
   const params = useParams();
   const proj_id = params.proj_id;
   const [searchParams, setSearchParams] = useSearchParams<{ compare?: string; work?: string }>();
@@ -131,8 +145,8 @@ export default function () {
   async function onLocaleChange(compare: string, work: string) {
     setSearchParams({ compare, work }, { replace: true });
     const [compareTranslation, workTranslation] = await Promise.all([
-      api.getTranslations(proj_id, compare),
-      api.getTranslations(proj_id, work),
+      getTranslations(proj_id, compare),
+      getTranslations(proj_id, work),
     ]);
     setTranslations({
       [compare]: compareTranslation,

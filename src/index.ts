@@ -22,7 +22,7 @@ apiRouter.get("/user", async (c) => {
   if (data) {
     return c.json(data);
   }
-  return c.json({ code: 401, message: "Unauthorized" }, 401);
+  return c.text("Unauthorized", 401);
 });
 
 // get all projects
