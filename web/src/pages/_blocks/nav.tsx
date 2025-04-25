@@ -176,10 +176,10 @@ export default function NavSidebarLayout(props: {
                 <MenuIcon />
               </IconButton>
             )}
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" component="div" class="truncate" sx={{ flexGrow: 1 }}>
               {props.title ?? config.title}
             </Typography>
-            <div class="*:!mx-2">
+            <div class="*:!mx-2 whitespace-nowrap">
               {props.children}
               <Show
                 when={userData()}
