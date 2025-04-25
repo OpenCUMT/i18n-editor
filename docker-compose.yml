@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  app:
+    image: i18n-editor
+    build: .
+    ports:
+      - "8000:80"
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Asia/Shanghai

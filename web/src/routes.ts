@@ -23,7 +23,7 @@ export function constructRoutes(globs: Record<string, () => Promise<any>>) {
     children?: RouteNode[];
   };
   const root: RouteNode = {
-    path: `${(import.meta.env.VITE_BUILD_BASE || "")}/`,
+    path: `${import.meta.env.VITE_BUILD_BASE || ""}/`,
   };
 
   for (const node of nodes) {
@@ -66,6 +66,12 @@ export function constructRoutes(globs: Record<string, () => Promise<any>>) {
       }
     }
   }
+
+  if (!root.children) root.children = [];
+  root.children.push({
+    path: "*",
+    component: lazy(() => import("./pages/_404")),
+  });
 
   return root;
 }

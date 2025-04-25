@@ -128,7 +128,7 @@ async function logout() {
 export function loginLink() {
   const u = new URL(window.location.href);
   const path = u.pathname + u.search;
-  return `${config.api_base.replace(/\/$/, "")}/account/login?redirect=${encodeURIComponent(path)}`;
+  return `account/login?redirect=${encodeURIComponent(path)}`;
 }
 
 export default function NavSidebarLayout(props: {

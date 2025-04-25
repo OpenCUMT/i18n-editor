@@ -20,9 +20,6 @@ export interface Config {
     glob: string;
     default: string;
   }[];
-  frontend: {
-    path: string;
-  };
 }
 
 const config: Config = toml.parse(await Bun.file("config.toml").text());

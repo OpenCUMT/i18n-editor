@@ -1,5 +1,5 @@
 import { CircularProgress, ToggleButton, ToggleButtonGroup } from "@suid/material";
-import { type ComponentProps, createSignal, Show, splitProps } from "solid-js";
+import { type ComponentProps, Show, createSignal, splitProps } from "solid-js";
 
 export default function WorkspaceTopbar(
   props: {

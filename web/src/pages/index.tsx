@@ -1,5 +1,4 @@
 import api from "@/api";
-import config from "@/config";
 import NavSidebarLayout, { ProjectList, updateProject } from "@/pages/_blocks/nav";
 import { projStore } from "@/storage";
 import { Divider, Skeleton, Typography } from "@suid/material";
@@ -13,7 +12,7 @@ export default function () {
   });
   return (
     <>
-      <Title subtitle={config.title} />
+      <Title />
       <NavSidebarLayout />
 
       <div class="h-4" />

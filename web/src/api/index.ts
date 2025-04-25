@@ -84,7 +84,6 @@ export function updateTranslation(proj_id: string, locale: string, key: string, 
     .json<PatchTranslationResponse>();
 }
 
-
 export default {
   getUserInfo,
   getProjectList,

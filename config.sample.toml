@@ -1,0 +1,16 @@
+[server]
+host = "127.0.0.1"
+port = 5030
+
+[server.runtime]
+api_base = "/api"
+
+[secure]
+jwt_algorithm = "HS256"
+jwt_secret = "your_jwt_secret"
+
+[[i18n]]
+id = "main"
+name = "网页翻译"
+glob = "data/main/*.json"
+default = "zh-cn"

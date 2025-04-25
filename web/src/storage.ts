@@ -1,4 +1,4 @@
-import type { UserData, ProjectInfo, ProjectListItem } from "@/api";
+import type { ProjectInfo, ProjectListItem, UserData } from "@/api";
 import { createStore } from "solid-js/store";
 
 export const [projStore, setProjStore] = createStore({
