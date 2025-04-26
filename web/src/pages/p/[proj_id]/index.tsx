@@ -87,7 +87,7 @@ function TransDisplay(props: {
                   sx={{ transform: "translate(0, -1.5px) scale(0.75)" }}
                   disableAnimation
                 >
-                  {props.workLocale}
+                  {props.compareLocale}
                 </InputLabel>
                 <Input type="text" class="!bg-transparent !px-0" multiline value={props.compareText} />
               </FormControl>
