@@ -29,6 +29,9 @@ export const auth = createMiddleware(async (c, next) => {
   const token = extractToken(c.req.header("Authorization"));
   const data = await verifyToken(token, config.secure.jwt_secret, config.secure.jwt_algorithm);
   if (data) {
+    if (!data.permissions.includes(9)) {
+      return c.text("Forbidden", 403);
+    }
     return await next();
   }
   return c.text("Unauthorized", 401);

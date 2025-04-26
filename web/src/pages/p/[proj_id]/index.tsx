@@ -124,11 +124,17 @@ function TransDisplay(props: {
 let alerted = false;
 function getTranslations(...args: Parameters<typeof api.getTranslations>) {
   return api.getTranslations(...args).catch((e) => {
-    if (e.response && e.response.status === 401 && !alerted) {
-      alerted = true;
-      const opt = window.confirm("未登录，请先登录");
-      if (opt) window.location.href = loginLink();
-      else window.location.replace(`${import.meta.env.VITE_BUILD_BASE || ""}/`);
+    if (e.response) {
+      if (e.response.status === 401 && !alerted) {
+        alerted = true;
+        const opt = window.confirm("未登录，请先登录");
+        if (opt) window.location.href = loginLink();
+        else window.location.replace(`${import.meta.env.VITE_BUILD_BASE || ""}/`);
+      } else if (e.response.status === 403 && !alerted) {
+        alerted = true;
+        window.alert("无权限，请联系管理员");
+        window.location.replace(`${import.meta.env.VITE_BUILD_BASE || ""}/`);
+      }
     }
     throw e;
   });
