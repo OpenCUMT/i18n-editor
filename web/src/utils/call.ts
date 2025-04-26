@@ -87,6 +87,7 @@ export class CallInterval {
   private interval: number;
   private timeout: NodeJS.Timeout | null = null;
   private call_func: (() => unknown) | null = null;
+  private prevent_call: boolean;
 
   constructor(interval: number);
   constructor(func: (...args: unknown[]) => unknown, interval: number);
@@ -100,17 +101,29 @@ export class CallInterval {
       this.call_func = funcOrInterval;
       this.interval = interval || 1000;
     }
+    this.prevent_call = false;
   }
 
   setFunc(func: (...args: unknown[]) => unknown) {
     this.call_func = func;
   }
 
-  start() {
-    if (this.timeout) return;
-    this.timeout = setInterval(() => {
-      this.call_func?.();
+  private getIntervalTimer() {
+    return setInterval(() => {
+      if (this.call_func) {
+        if (!this.prevent_call) this.call_func?.();
+      }
     }, this.interval);
+  }
+
+  start() {
+    this.prevent_call = false;
+    if (this.timeout) return;
+    this.timeout = this.getIntervalTimer();
+  }
+
+  pause() {
+    this.prevent_call = true;
   }
 
   stop() {
@@ -128,9 +141,7 @@ export class CallInterval {
   resetTime() {
     if (this.timeout) {
       clearInterval(this.timeout);
-      this.timeout = setInterval(() => {
-        this.call_func?.();
-      }, this.interval);
+      this.timeout = this.getIntervalTimer();
     }
   }
 }

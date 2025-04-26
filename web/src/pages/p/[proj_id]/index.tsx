@@ -48,13 +48,15 @@ function TransDisplay(props: {
           <Typography class="!text-lg pb-4 w-full">
             <div class="flex flex-row">
               <span id={props.key} class="absolute translate-y-[-236px] lg:translate-y-[-172px]" />
-              <span>
-                <a class="mr-2" href={`#${props.key}`} title={props.key}>
-                  <SubtitlesOutlinedIcon />
-                </a>
-                <span>{props.key}</span>
+              <a class="mr-2" href={`#${props.key}`} title={props.key}>
+                <SubtitlesOutlinedIcon />
+              </a>
+              <span class="flex flex-wrap">
+                {props.key.split(".").map((s, i) => (
+                  <span class="break-all">{i === 0 ? s : `.${s}`}</span>
+                ))}
               </span>
-              <span class="ml-auto">
+              <span class="ml-auto float-right">
                 <Show when={loading()}>
                   <Button variant="text" size="small" class="!min-w-0 !mx-2" disabled>
                     <CircularProgress size={"1rem"} color="info" />
@@ -63,7 +65,7 @@ function TransDisplay(props: {
                 <Button
                   variant="outlined"
                   size="small"
-                  class="!min-w-2"
+                  class="!min-w-2 whitespace-nowrap"
                   disabled={loading()}
                   onClick={async () => {
                     if (props.onSave) {
@@ -173,7 +175,9 @@ export default function () {
   const searchInput = createElementRef<HTMLInputElement | HTMLTextAreaElement>();
 
   const translateKeys = createMemo(() =>
-    Object.keys(translations[workLocale()! ?? ""] ?? {}).sort((a, b) => compareTranslation(a, b))
+    Object.keys(translations[workLocale()! ?? ""] ?? translations[compareLocale()! ?? ""] ?? {}).sort((a, b) =>
+      compareTranslation(a, b)
+    )
   );
   const filterString = createMemo(() => searchParams.search?.trim()?.toLowerCase() ?? "");
   const filteredKeys = createMemo(() => {
@@ -187,6 +191,7 @@ export default function () {
     return Number.isNaN(page) ? page : page > totalPages() ? totalPages() : page < 1 ? 1 : page;
   });
 
+  const AppointCall = new AppointTimeCall(500);
   const compareTransSchedule = new CallInterval(() => {
     getTranslations(proj_id, compareLocale()!).then((resp) => {
       setTranslations({
@@ -203,6 +208,8 @@ export default function () {
   }, 30 * 1000);
 
   async function onLocaleChange(compare: string, work: string) {
+    compareTransSchedule.pause();
+    workTransSchedule.pause();
     setSearchParams({ compare, work }, { replace: true });
     const [compareTranslation, workTranslation] = await Promise.all([
       getTranslations(proj_id, compare),
@@ -220,18 +227,22 @@ export default function () {
   }
 
   async function onSave(locale: string, key: string, value: string) {
+    compareTransSchedule.pause();
+    workTransSchedule.pause();
     const resp = await api.updateTranslation(proj_id, locale, key, value);
     if (resp.success) {
       setTranslations({
         [locale]: resp.data,
       });
     }
+    compareTransSchedule.start();
+    workTransSchedule.start();
   }
 
   const SearchLock = new CallLock(() => {
     onSearch(searchInput.ref?.value || "");
   });
-  const AppointCall = new AppointTimeCall(500);
+
   function onSearch(searchText?: string | null) {
     AppointCall.cancel();
     setSearchParams({ search: searchText?.trim().toLowerCase() || null }, { replace: true });
@@ -253,6 +264,9 @@ export default function () {
       current: null,
     });
     setTranslations({});
+    AppointCall.cancel();
+    compareTransSchedule.stop();
+    workTransSchedule.stop();
   });
 
   return (
@@ -365,9 +379,9 @@ export default function () {
                     <TransDisplay
                       key={key}
                       compareLocale={compareLocale()!}
-                      compareText={translations[compareLocale()!][key] ?? ""}
+                      compareText={translations[compareLocale()!]?.[key] ?? ""}
                       workLocale={workLocale()!}
-                      workText={translations[workLocale()!][key] ?? ""}
+                      workText={translations[workLocale()!]?.[key] ?? ""}
                       onSave={onSave}
                     />
                   </>
