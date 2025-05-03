@@ -21,7 +21,7 @@ import {
   Toolbar,
   Typography,
 } from "@suid/material";
-import { type ComponentProps, type JSX, Show, createSignal } from "solid-js";
+import { type ComponentProps, For, type JSX, Show, createSignal } from "solid-js";
 import Link from "./link";
 
 export function updateProject(source: (ProjectListItem & Partial<ProjectInfo>)[]) {
@@ -67,23 +67,25 @@ type ListItemProps = {
 export function SidebarList(props: { items: ListItemProps[] }) {
   return (
     <List>
-      {props.items.map((item) => (
-        <ListItem disablePadding>
-          {"onClick" in item ? (
-            <ListItemButton onClick={item.onClick}>
-              {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          ) : "href" in item ? (
-            <ListItemButton component={Link} target={item.target} href={item.href}>
-              {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          ) : (
-            <></>
-          )}
-        </ListItem>
-      ))}
+      <For each={props.items}>
+        {(item) => (
+          <ListItem disablePadding>
+            {"onClick" in item ? (
+              <ListItemButton onClick={item.onClick}>
+                {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            ) : "href" in item ? (
+              <ListItemButton component={Link} target={item.target} href={item.href}>
+                {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            ) : (
+              <></>
+            )}
+          </ListItem>
+        )}
+      </For>
     </List>
   );
 }

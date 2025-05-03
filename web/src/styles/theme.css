@@ -23,6 +23,7 @@ body {
 }
 
 @theme {
+  --color-success: oklch(0.67 0.1624 144.21);
   --color-primary: oklch(0.64 0.17 248);
   --font-family-base:
     Inter, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, 微软雅黑,

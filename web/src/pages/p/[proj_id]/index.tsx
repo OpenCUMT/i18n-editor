@@ -5,6 +5,7 @@ import { projStore, setProjStore } from "@/storage";
 import { AppointTimeCall, CallInterval, CallLock } from "@/utils/call";
 import { useParams } from "@solidjs/router";
 import { useSearchParams } from "@solidjs/router";
+import CheckCircleOutlineOutlinedIcon from "@suid/icons-material/CheckCircleOutlineOutlined";
 import SearchOutlinedIcon from "@suid/icons-material/SearchOutlined";
 import SubtitlesOutlinedIcon from "@suid/icons-material/SubtitlesOutlined";
 import TranslateOutlinedIcon from "@suid/icons-material/TranslateOutlined";
@@ -27,7 +28,7 @@ import {
 } from "@suid/material";
 import createElementRef from "@suid/system/createElementRef";
 import clsx from "clsx";
-import { Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import WorkspaceTopbar from "./_blocks/topbar";
 
@@ -41,6 +42,7 @@ function TransDisplay(props: {
 }) {
   const [workText, setWorkText] = createSignal(props.workText);
   const [loading, setLoading] = createSignal(false);
+  const [saved, setSaved] = createSignal(false);
   return (
     <div class="block my-4">
       <Card class="w-full px-2">
@@ -65,17 +67,30 @@ function TransDisplay(props: {
                 <Button
                   variant="outlined"
                   size="small"
-                  class="!min-w-2 whitespace-nowrap"
-                  disabled={loading()}
+                  class={clsx("!min-w-2 whitespace-nowrap", saved() && "!bg-success/10 !text-success !border-success")}
+                  disabled={loading() || saved()}
                   onClick={async () => {
                     if (props.onSave) {
                       setLoading(true);
                       await props.onSave(props.workLocale, props.key, workText());
+                      setSaved(true);
                       setLoading(false);
+                      setTimeout(() => {
+                        setSaved(false);
+                      }, 2000);
                     }
                   }}
                 >
-                  保存
+                  <Show when={saved()}>
+                    <CheckCircleOutlineOutlinedIcon
+                      class="mr-1"
+                      sx={{
+                        height: "1rem",
+                        width: "1rem",
+                      }}
+                    />
+                  </Show>
+                  <span>保存</span>
                 </Button>
               </span>
             </div>
@@ -377,9 +392,8 @@ export default function () {
           }
         >
           <div class="block w-full max-w-[1320px] m-auto">
-            {filteredKeys()
-              .slice((curPage() - 1) * PAGE_SIZE, curPage() * PAGE_SIZE)
-              .map((key) => {
+            <For each={filteredKeys().slice((curPage() - 1) * PAGE_SIZE, curPage() * PAGE_SIZE)}>
+              {(key) => {
                 return (
                   <>
                     <TransDisplay
@@ -392,7 +406,8 @@ export default function () {
                     />
                   </>
                 );
-              })}
+              }}
+            </For>
           </div>
           <div class="block w-full">
             <div class="w-max max-w-full m-auto">
