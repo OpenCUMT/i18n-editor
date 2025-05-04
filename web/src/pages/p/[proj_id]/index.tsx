@@ -441,10 +441,7 @@ export default function () {
               }}
             />
             <FormHelperText>
-              <Show
-                when={filterString()}
-                fallback={<span class="text-transparent pointer-events-none select-none">已显示全部</span>}
-              >
+              <Show when={filterString()} fallback={<span>已加载 {filteredKeys().length} 条结果</span>}>
                 <span>共找到 {filteredKeys().length} 条搜索结果</span>
               </Show>
             </FormHelperText>
