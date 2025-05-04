@@ -6,6 +6,7 @@ import { AppointTimeCall, CallInterval, CallLock } from "@/utils/call";
 import { useParams } from "@solidjs/router";
 import { useSearchParams } from "@solidjs/router";
 import CheckCircleOutlineOutlinedIcon from "@suid/icons-material/CheckCircleOutlineOutlined";
+import CircleIcon from "@suid/icons-material/Circle";
 import SearchOutlinedIcon from "@suid/icons-material/SearchOutlined";
 import SubtitlesOutlinedIcon from "@suid/icons-material/SubtitlesOutlined";
 import TranslateOutlinedIcon from "@suid/icons-material/TranslateOutlined";
@@ -28,7 +29,7 @@ import {
 } from "@suid/material";
 import createElementRef from "@suid/system/createElementRef";
 import clsx from "clsx";
-import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Show, createMemo, createRenderEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import WorkspaceTopbar from "./_blocks/topbar";
 
@@ -40,9 +41,41 @@ function TransDisplay(props: {
   workText: string;
   onSave?: (locale: string, key: string, value: string) => void | Promise<void>;
 }) {
+  const [initialWorkLocale, setInitialWorkLocale] = createSignal(props.workLocale);
+  const [initialWorkText, setInitialWorkText] = createSignal(props.workText);
   const [workText, setWorkText] = createSignal(props.workText);
   const [loading, setLoading] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
+  const workInputRef = createElementRef<HTMLInputElement | HTMLTextAreaElement>();
+  const modifying = createMemo(() => initialWorkLocale() === props.workLocale && initialWorkText() !== workText());
+
+  function tryLocaleChange(prevLocale: string) {
+    if (prevLocale !== props.workLocale) {
+      setInitialWorkLocale(props.workLocale);
+      setInitialWorkText(props.workText);
+      setWorkText(props.workText);
+      if (workInputRef.ref) {
+        workInputRef.ref.value = props.workText;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  createRenderEffect(() => {
+    const localeChanged = tryLocaleChange(initialWorkLocale());
+    if (!localeChanged) {
+      // only update workText
+      if (!modifying()) {
+        setInitialWorkText(props.workText);
+        setWorkText(props.workText);
+        if (workInputRef.ref) {
+          workInputRef.ref.value = props.workText;
+        }
+      }
+    }
+  }, [props.workLocale, props.workText]);
+
   return (
     <div class="block my-4">
       <Card class="w-full px-2">
@@ -58,11 +91,23 @@ function TransDisplay(props: {
                   <span class="break-all">{i === 0 ? s : `.${s}`}</span>
                 ))}
               </span>
-              <span class="ml-auto float-right">
+              <span class="flex items-center ml-auto float-right">
                 <Show when={loading()}>
                   <Button variant="text" size="small" class="!min-w-0 !mx-2" disabled>
                     <CircularProgress size={"1rem"} color="info" />
                   </Button>
+                </Show>
+                <Show when={modifying() && !loading() && !saved()}>
+                  <span class="min-w-0 mx-2 block place-self-start">
+                    <CircleIcon
+                      sx={{
+                        height: ".5rem",
+                        width: ".5rem",
+                        transform: "translateY(-0.5rem)",
+                        color: "var(--primary-color)",
+                      }}
+                    />
+                  </span>
                 </Show>
                 <Button
                   variant="outlined"
@@ -73,6 +118,7 @@ function TransDisplay(props: {
                     if (props.onSave) {
                       setLoading(true);
                       await props.onSave(props.workLocale, props.key, workText());
+                      setInitialWorkText(workText());
                       setSaved(true);
                       setLoading(false);
                       setTimeout(() => {
@@ -122,10 +168,12 @@ function TransDisplay(props: {
                 <Input
                   type="text"
                   multiline
-                  defaultValue={workText()}
+                  defaultValue={props.workText}
                   onChange={(e) => {
+                    console.log(e.currentTarget.value, workText());
                     setWorkText(e.currentTarget.value);
                   }}
+                  inputRef={workInputRef}
                 />
               </FormControl>
             </div>
@@ -295,6 +343,7 @@ export default function () {
       <Title subtitle={projStore.current?.name} />
       <NavSidebarLayout sidebar title={projStore.current?.name}>
         <IconButton
+          color="inherit"
           onClick={() =>
             setShowWorkspaceTopbar((prev) => {
               if (prev) {
