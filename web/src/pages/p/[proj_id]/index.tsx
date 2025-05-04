@@ -47,6 +47,7 @@ function TransDisplay(props: {
   const [loading, setLoading] = createSignal(false);
   const [saved, setSaved] = createSignal(false);
   const workInputRef = createElementRef<HTMLInputElement | HTMLTextAreaElement>();
+  const saveBtnRef = createElementRef<HTMLButtonElement>();
   const modifying = createMemo(() => initialWorkLocale() === props.workLocale && initialWorkText() !== workText());
 
   function tryLocaleChange(prevLocale: string) {
@@ -75,6 +76,13 @@ function TransDisplay(props: {
       }
     }
   }, [props.workLocale, props.workText]);
+
+  const saveLock = new CallLock((e: KeyboardEvent) => {
+    e.preventDefault();
+    if (saveBtnRef.ref) {
+      saveBtnRef.ref.click();
+    }
+  });
 
   return (
     <div class="block my-4">
@@ -126,6 +134,7 @@ function TransDisplay(props: {
                       }, 2000);
                     }
                   }}
+                  ref={saveBtnRef}
                 >
                   <Show when={saved()}>
                     <CheckCircleOutlineOutlinedIcon
@@ -170,10 +179,19 @@ function TransDisplay(props: {
                   multiline
                   defaultValue={props.workText}
                   onChange={(e) => {
-                    console.log(e.currentTarget.value, workText());
                     setWorkText(e.currentTarget.value);
                   }}
                   inputRef={workInputRef}
+                  onKeyDown={(e) => {
+                    if (e.ctrlKey && e.key === "s") {
+                      saveLock.tryLockCall(e);
+                    }
+                  }}
+                  onKeyUp={(e) => {
+                    if (e.ctrlKey && e.key === "s") {
+                      saveLock.unlock();
+                    }
+                  }}
                 />
               </FormControl>
             </div>
@@ -413,7 +431,7 @@ export default function () {
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  SearchLock.tryCall(true);
+                  SearchLock.tryLockCall();
                 }
               }}
               onKeyUp={(e) => {

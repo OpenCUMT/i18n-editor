@@ -58,13 +58,14 @@ export class AppointTimeCall {
   }
 }
 
-export class CallLock {
+// biome-ignore lint/suspicious/noExplicitAny: any function type
+export class CallLock<T extends (...args: any[]) => any> {
   protected state: boolean;
-  private call_func: (() => unknown) | null = null;
+  private call_func: T | null = null;
 
-  constructor(func: (...args: unknown[]) => unknown) {
+  constructor(func: (this: CallLock<T>, ...args: Parameters<T>) => ReturnType<T>) {
     this.state = true;
-    this.call_func = func;
+    this.call_func = func as T;
   }
 
   lock() {
@@ -75,10 +76,17 @@ export class CallLock {
     this.state = true;
   }
 
-  tryCall(lock = false) {
+  tryCall(...args: Parameters<T>): ReturnType<T> | undefined {
     if (this.call_func && this.state) {
-      if (lock) this.lock();
-      this.call_func();
+      this.lock();
+      return this.call_func.apply(this, args);
+    }
+  }
+
+  tryLockCall(...args: Parameters<T>): ReturnType<T> | undefined {
+    if (this.call_func && this.state) {
+      this.lock();
+      return this.call_func.apply(this, args);
     }
   }
 }
