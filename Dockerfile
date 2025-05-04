@@ -11,7 +11,7 @@ ARG BASE_URL
 RUN echo "VITE_BUILD_BASE=$BASE_URL" > .env
 RUN sed -i "s|/api|$BASE_URL/api|g" config.toml
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm build
 
 # ---
