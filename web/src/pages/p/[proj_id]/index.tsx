@@ -184,6 +184,7 @@ function TransDisplay(props: {
                   inputRef={workInputRef}
                   onKeyDown={(e) => {
                     if (e.ctrlKey && e.key === "s") {
+                      e.preventDefault();
                       saveLock.tryLockCall(e);
                     }
                   }}
