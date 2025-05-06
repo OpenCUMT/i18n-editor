@@ -78,7 +78,6 @@ export class CallLock<T extends (...args: any[]) => any> {
 
   tryCall(...args: Parameters<T>): ReturnType<T> | undefined {
     if (this.call_func && this.state) {
-      this.lock();
       return this.call_func.apply(this, args);
     }
   }
